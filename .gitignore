@@ -1,0 +1,19 @@
+# Node.js dependencies
+node_modules
+
+# Environment variables
+.env
+.env.local
+
+# macOS system files
+.DS_Store
+
+# Python virtual environment and cache
+venv
+__pycache__
+
+# Next.js build output
+.next
+
+# Distribution/build folders
+dist
