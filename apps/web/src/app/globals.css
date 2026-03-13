@@ -23,4 +23,199 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  
+  background-color: #020617;
+
+}
+/* COSMIC BACKGROUND */
+
+.cosmic-bg {
+  background: radial-gradient(circle at 20% 20%, #1e3a8a 0%, transparent 40%),
+              radial-gradient(circle at 80% 30%, #9333ea 0%, transparent 40%),
+              radial-gradient(circle at 50% 80%, #0ea5e9 0%, transparent 40%),
+              #050816;
+}
+
+/* glowing floating orb */
+
+.orb {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #3b82f6, transparent);
+  filter: blur(120px);
+  opacity: 0.5;
+  animation: float 10s infinite ease-in-out;
+}
+
+.orb2 {
+  background: radial-gradient(circle, #a855f7, transparent);
+  animation-delay: 3s;
+}
+
+.orb3 {
+  background: radial-gradient(circle, #06b6d4, transparent);
+  animation-delay: 6s;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-40px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+.hero-blend {
+  mask-image: linear-gradient(to top, transparent, black 40%);
+}
+.login-btn {
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  transform: scale(1.03);
+}
+
+.learner {
+  background: linear-gradient(90deg,#2b6cb0,#1e40af);
+}
+
+.recruiter {
+  background: linear-gradient(90deg,#9333ea,#6b21a8);
+}
+
+.college {
+  background: linear-gradient(90deg,#14b8a6,#0d9488);
+}
+
+.admin {
+  background: linear-gradient(90deg,#9ca3af,#6b7280);
+}
+/* COSMIC ORBIT RING */
+
+.orbit-ring {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow:
+    0 0 40px rgba(255,255,255,0.25),
+    inset 0 0 40px rgba(255,255,255,0.1);
+  animation: orbitRotate 25s linear infinite;
+}
+
+@keyframes orbitRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.orbit-ring::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px white;
+}
+/* Add these to your existing globals.css */
+
+/* Orbit ring around the login card */
+.orbit-ring {
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 40px rgba(99, 102, 241, 0.2),
+    inset 0 0 40px rgba(99, 102, 241, 0.08);
+  animation: orbitRotate 30s linear infinite;
+  pointer-events: none;
+}
+
+.orbit-ring::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes orbitRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Role login buttons */
+.role-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: transform 0.2s, opacity 0.2s;
+  width: 100%;
+}
+
+.role-btn:hover {
+  transform: scale(1.03);
+  opacity: 0.92;
+}
+
+.role-btn:active {
+  transform: scale(0.98);
+}
+
+.learner  { background: linear-gradient(90deg, #1d4ed8, #2563eb); }
+.recruiter{ background: linear-gradient(90deg, #9333ea, #7e22ce); }
+.college  { background: linear-gradient(90deg, #14b8a6, #0f766e); }
+.admin    { background: linear-gradient(90deg, #9ca3af, #6b7280); }
+/* COSMOS DASHBOARD */
+
+.cosmos-glass {
+  background: rgba(10, 8, 25, 0.55);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.08),
+    0 32px 80px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.cosmos-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+}
+
+.cosmos-card:hover {
+  box-shadow: 0 0 30px rgba(168,85,247,0.35);
+  transform: translateY(-2px);
+}
+
+.cosmos-sidebar {
+  background: rgba(255,255,255,0.03);
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+
+.cosmos-topbar {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
