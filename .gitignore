@@ -17,3 +17,9 @@ __pycache__
 
 # Distribution/build folders
 dist
+
+venv/
+
+__pycache__/
+
+.vscode/
