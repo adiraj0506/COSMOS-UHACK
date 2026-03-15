@@ -5,7 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell,
 } from 'recharts'
-import type { BranchStats, ReadinessTrend, SkillGap } from './college.types.ts'
+import type { BranchStats, ReadinessTrend, SkillGap } from './college.types'
 
 interface CollegeAnalyticsProps {
   branchStats: BranchStats[]
@@ -53,8 +53,12 @@ export default function CollegeAnalytics({ branchStats, trend, skillGaps }: Coll
             <BarChart data={branchStats} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
               <XAxis dataKey="branch" tick={{ fill: '#475569', fontSize: 9 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#475569', fontSize: 9 }} axisLine={false} tickLine={false} />
-              <Tooltip {...tooltipStyle}
-                formatter={(val: number, name: string) => [val, name === 'avgReadiness' ? 'Avg Readiness' : name]}
+              <Tooltip
+                {...tooltipStyle}
+                formatter={(value, name) => {
+                  const rawValue = Array.isArray(value) ? value[0] : value
+                  return [rawValue ?? 0, name === 'avgReadiness' ? 'Avg Readiness' : name]
+                }}
               />
               <Bar dataKey="total" radius={[4,4,0,0]}>
                 {branchStats.map((b, i) => (

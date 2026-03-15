@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 
 import DashboardShell from '@/components/learner/dashboard/DashboardShell'
 import GoalSelection from '@/components/learner/assessment/GoalSelection'
-import TopicSelection from '@/components/learner/assessment/TopicSelection'
+import TopicSelection, { type Topic } from '@/components/learner/assessment/TopicSelection'
 import StartConfiguration from '@/components/learner/assessment/StartConfiguration'
 import QuestionCard from '@/components/learner/assessment/QuestionCard'
 import QuestionGrid from '@/components/learner/assessment/QuestionGrid'
@@ -16,7 +16,6 @@ import OptionsPanel from '@/components/learner/assessment/OptionsPanel'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = 'tips' | 'mentor' | 'api'
-type Topic = 'DSA' | 'System Design' | 'Web Dev' | 'OS' | 'DBMS' | 'Networking' | 'OOP' | 'SQL'
 type GoalKey = 'backend' | 'frontend' | 'fullstack' | 'data' | 'devops' | 'ml'
 
 interface Question {

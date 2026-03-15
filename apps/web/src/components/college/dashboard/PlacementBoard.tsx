@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { Trophy, AlertTriangle, ExternalLink, TrendingUp } from 'lucide-react'
-import type { PlacementRecord, Student } from './college.types.ts'
-import { readinessColor } from './college.types.ts'
+import type { PlacementRecord, Student } from './college.types'
+import { readinessColor } from './college.types'
 
 interface PlacementBoardProps {
   placements: PlacementRecord[]

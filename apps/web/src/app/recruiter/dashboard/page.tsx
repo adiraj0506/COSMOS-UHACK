@@ -131,7 +131,9 @@ export default function RecruiterDashboard() {
                   onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
                   <Briefcase size={13} style={{ color:'#f59e0b', flexShrink:0 }}/>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <p style={{ fontSize:11.5, fontWeight:700, color:'#f1f5f9', truncate:true }}>{j.title.split('—')[0].trim()}</p>
+                    <p style={{ fontSize:11.5, fontWeight:700, color:'#f1f5f9', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {j.title.split('—')[0].trim()}
+                    </p>
                     <p style={{ fontSize:9.5, color:'#475569' }}>{j.applicants} applicants · <span style={{ color:'#a855f7' }}>{j.matches} matches</span></p>
                   </div>
                   <span className="rr-badge rr-badge--amber">{j.type}</span>

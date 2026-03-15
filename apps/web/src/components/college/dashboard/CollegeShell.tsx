@@ -9,7 +9,7 @@ import {
   Bell, Settings, LogOut, ChevronLeft, ChevronRight,
   GraduationCap, Building2, Mail,
 } from 'lucide-react'
-import { MOCK_COLLEGE } from './college.types.ts'
+import { MOCK_COLLEGE } from './college.types'
 
 const NAV = [
   { label: 'Dashboard',  href: '/college/dashboard',  icon: LayoutDashboard },

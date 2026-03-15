@@ -3,21 +3,23 @@
 import { useEffect, useState } from 'react'
 import { Layers } from 'lucide-react'
 
-const TOPICS = ['DSA', 'System Design', 'Web Dev', 'OS', 'DBMS', 'Networking', 'OOP', 'SQL']
+const TOPICS = ['DSA', 'System Design', 'Web Dev', 'OS', 'DBMS', 'Networking', 'OOP', 'SQL'] as const
+
+export type Topic = (typeof TOPICS)[number]
 
 interface TopicSelectionProps {
-  value?: string[]
-  onChange?: (value: string[]) => void
+  value?: Topic[]
+  onChange?: (value: Topic[]) => void
 }
 
 export default function TopicSelection({ value = ['DSA', 'System Design'], onChange }: TopicSelectionProps) {
-  const [selected, setSelected] = useState<string[]>(value)
+  const [selected, setSelected] = useState<Topic[]>(value)
 
   useEffect(() => {
     setSelected(value)
   }, [value])
 
-  function toggle(t: string) {
+  function toggle(t: Topic) {
     const next = selected.includes(t) ? selected.filter(x => x !== t) : [...selected, t]
     setSelected(next)
     if (onChange) onChange(next)

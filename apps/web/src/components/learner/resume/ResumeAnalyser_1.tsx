@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, RefreshCw, CheckCircle2, AlertCircle, Info, Upload, FileText, X } from 'lucide-react'
-import type { GeneratedResume } from './ResumePreview'
+import type { GeneratedResume } from './ResumePreview_1'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AnalysisResult {

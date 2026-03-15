@@ -5,8 +5,8 @@ import {
   Users, TrendingUp, Trophy, AlertTriangle,
   Activity, GraduationCap,
 } from 'lucide-react'
-import type { Student, PlacementRecord } from './college.types.ts'
-import { MOCK_COLLEGE } from './college.types.ts'
+import type { Student, PlacementRecord } from './college.types'
+import { MOCK_COLLEGE } from './college.types'
 
 interface CollegeKpiStripProps {
   students:   Student[]

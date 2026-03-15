@@ -12,7 +12,7 @@ export default function MentorPage() {
   const [pendingPrompt, setPendingPrompt] = useState('')
 
   return (
-    <DashboardShell activehref="/learner/mentor">
+    <DashboardShell activeHref="/learner/mentor">
 
       {/* ── Context strip ── */}
       <h2 className="section-title">✦ Mentor Overview</h2>
