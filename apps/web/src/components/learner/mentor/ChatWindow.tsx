@@ -17,13 +17,7 @@ interface Message {
   time: string
 }
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    role: 'mentor',
-    text: "Hey Akash! 👋 I'm your COSMOS AI Mentor. I've analysed your skill profile — your Problem Solving is strong at 72%, but System Design at 50% is your biggest growth opportunity for a Backend Developer role. Where would you like to start today?",
-    time: 'Just now',
-  },
-]
+const DEFAULT_GREETING = "Hey Akash! 👋 I'm your COSMOS AI Mentor. I've analysed your skill profile — your Problem Solving is strong at 72%, but System Design at 50% is your biggest growth opportunity for a Backend Developer role. Where would you like to start today?"
 
 const INSIGHTS = [
   { icon: '📈', title: 'Progress Trend',    body: 'Problem Solving improved 5% this week. Keep solving 2-3 problems daily to maintain momentum.', color: 'from-emerald-900/30 to-transparent', border: 'border-emerald-500/20' },
@@ -47,10 +41,30 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ pendingPrompt, onPromptConsumed }: ChatWindowProps) {
   const [activeTab, setActiveTab] = useState<Tab>('chat')
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'mentor', text: DEFAULT_GREETING, time: 'Just now' },
+  ])
+  const [userName, setUserName] = useState('Akash')
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('cosmos_name')
+    if (stored) setUserName(stored)
+  }, [])
+
+  useEffect(() => {
+    if (!userName || userName === 'Akash') return
+    setMessages(prev => {
+      if (!prev.length || prev[0].role !== 'mentor') return prev
+      const updated = {
+        ...prev[0],
+        text: prev[0].text.replace(/Akash/g, userName),
+      }
+      return [updated, ...prev.slice(1)]
+    })
+  }, [userName])
 
   // Consume prompt injected from quick-prompt chips
   useEffect(() => {
@@ -148,7 +162,7 @@ const messagesRef = useRef<HTMLDivElement>(null)
         <div className="flex-1 overflow-y-auto p-1 space-y-2.5">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles size={13} className="text-violet-400" style={{ filter: 'drop-shadow(0 0 4px #a855f7)' }} />
-            <p className="text-white font-bold text-xs">AI-Generated Insights for Akash</p>
+            <p className="text-white font-bold text-xs">AI-Generated Insights for {userName}</p>
           </div>
           {INSIGHTS.map((ins, i) => (
             <div key={i} className={`flex items-start gap-3 px-3 py-3 rounded-xl bg-gradient-to-r ${ins.color} border ${ins.border}`}>

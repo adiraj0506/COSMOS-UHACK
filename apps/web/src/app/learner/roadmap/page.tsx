@@ -1,432 +1,652 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DashboardShell from '@/components/learner/dashboard/DashboardShell'
 import {
   Rocket, Star, Globe, CheckCircle2, Clock, Circle,
-  ChevronDown, Filter, Plus, Zap, Target, Calendar, Flame,
+  Plus, Zap, Target, Flame, X, Pencil, Trash2, ChevronDown,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Status   = 'completed' | 'in-progress' | 'pending'
 type Priority = 'high' | 'medium' | 'low'
 type Category = 'DSA' | 'System Design' | 'Web Dev' | 'Communication' | 'Projects'
+type IconKey  = 'rocket' | 'star' | 'planet' | 'zap' | 'target' | 'flame'
 
 interface Subtask { label: string; done: boolean }
 
 interface RoadmapItem {
-  id: string
-  title: string
+  id:          string
+  title:       string
   description: string
-  deadline: string
-  status: Status
-  priority: Priority
-  category: Category
-  progress: number
-  icon: 'rocket' | 'star' | 'planet' | 'zap' | 'target'
-  subtasks: Subtask[]
+  deadline:    string
+  status:      Status
+  priority:    Priority
+  category:    Category
+  progress:    number
+  icon:        IconKey
+  subtasks:    Subtask[]
 }
 
-// ── Mock data — TODO backend: GET /api/learner/roadmap → { items: RoadmapItem[] }
-const MOCK_ITEMS: RoadmapItem[] = [
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const ICON_MAP: Record<IconKey, React.ReactNode> = {
+  rocket: <Rocket  size={14} />,
+  star:   <Star    size={14} />,
+  planet: <Globe   size={14} />,
+  zap:    <Zap     size={14} />,
+  target: <Target  size={14} />,
+  flame:  <Flame   size={14} />,
+}
+
+const STATUS_STYLE: Record<Status, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+  completed:   { label: 'Completed',   color: '#4ade80', bg: 'rgba(74,222,128,0.12)',  icon: <CheckCircle2 size={11} /> },
+  'in-progress':{ label: 'In Progress', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', icon: <Clock        size={11} /> },
+  pending:     { label: 'Pending',     color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: <Circle       size={11} /> },
+}
+
+const PRIORITY_COLOR: Record<Priority, string> = {
+  high:   '#f87171',
+  medium: '#fb923c',
+  low:    '#6b7280',
+}
+
+const CATEGORIES: Category[] = ['DSA','System Design','Web Dev','Communication','Projects']
+const ICONS: IconKey[]        = ['rocket','star','planet','zap','target','flame']
+
+function daysLeft(deadline: string) {
+  const diff = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)
+  if (diff < 0)  return { label: `${Math.abs(diff)}d overdue`, color: '#f87171' }
+  if (diff === 0) return { label: 'Due today',  color: '#fb923c' }
+  return { label: `${diff}d left`, color: '#6b7280' }
+}
+
+// ── Initial data ──────────────────────────────────────────────────────────────
+const INITIAL: RoadmapItem[] = [
   {
-    id: '1', title: 'Master System Design Fundamentals',
-    description: 'Cover scalability, load balancing, caching strategies, and database design patterns.',
-    deadline: '2025-04-15', status: 'in-progress', priority: 'high', category: 'System Design', progress: 45, icon: 'planet',
+    id: '1', title: 'Solve 100 DSA Problems',
+    description: 'Master core patterns: arrays, trees, graphs, DP',
+    deadline: '2025-07-01', status: 'in-progress', priority: 'high',
+    category: 'DSA', progress: 60, icon: 'rocket',
     subtasks: [
-      { label: 'Scalability & Load Balancing',    done: true  },
-      { label: 'Database Design Patterns',         done: true  },
-      { label: 'Caching (Redis, CDN)',              done: false },
-      { label: 'Message Queues & Event Streaming', done: false },
+      { label: 'Arrays & Strings', done: true  },
+      { label: 'Trees & Graphs',   done: false },
+      { label: 'Dynamic Programming', done: false },
     ],
   },
   {
-    id: '2', title: 'Solve 100 DSA Problems',
-    description: 'Focus on arrays, trees, graphs, and dynamic programming patterns.',
-    deadline: '2025-04-01', status: 'in-progress', priority: 'high', category: 'DSA', progress: 62, icon: 'rocket',
+    id: '2', title: 'System Design Fundamentals',
+    description: 'Learn scalable architecture patterns and trade-offs',
+    deadline: '2025-08-15', status: 'pending', priority: 'high',
+    category: 'System Design', progress: 0, icon: 'planet',
     subtasks: [
-      { label: 'Arrays & Strings (25/25)',   done: true  },
-      { label: 'Trees & Graphs (18/25)',     done: false },
-      { label: 'Dynamic Programming (0/25)', done: false },
-      { label: 'Backtracking (19/25)',       done: false },
+      { label: 'CAP Theorem',   done: false },
+      { label: 'Load Balancing', done: false },
+      { label: 'Caching',        done: false },
     ],
   },
   {
-    id: '3', title: 'Build a Full-Stack REST API Project',
-    description: 'Create a production-ready backend with Node.js, Express, PostgreSQL, and Docker.',
-    deadline: '2025-04-30', status: 'pending', priority: 'high', category: 'Web Dev', progress: 0, icon: 'zap',
+    id: '3', title: 'Build Portfolio Projects',
+    description: '3 full-stack projects to showcase on resume',
+    deadline: '2025-09-01', status: 'pending', priority: 'medium',
+    category: 'Projects', progress: 10, icon: 'star',
     subtasks: [
-      { label: 'Project Setup & Auth',     done: false },
-      { label: 'Core API Endpoints',       done: false },
-      { label: 'Database Schema & ORM',    done: false },
-      { label: 'Deploy on Railway/Render', done: false },
-    ],
-  },
-  {
-    id: '4', title: 'Mock Interview Practice (5 rounds)',
-    description: 'Practice behavioral and technical interviews with peers and AI feedback.',
-    deadline: '2025-05-10', status: 'pending', priority: 'medium', category: 'Communication', progress: 0, icon: 'star',
-    subtasks: [
-      { label: 'Intro & Behavioral Round', done: false },
-      { label: 'DSA Live Coding Round',    done: false },
-      { label: 'System Design Round',      done: false },
-      { label: 'HR & Culture Fit Round',   done: false },
-    ],
-  },
-  {
-    id: '5', title: 'Complete Web Development Module',
-    description: 'Master React, Next.js, REST API consumption, and frontend performance optimisation.',
-    deadline: '2025-03-20', status: 'completed', priority: 'medium', category: 'Web Dev', progress: 100, icon: 'star',
-    subtasks: [
-      { label: 'React Hooks & State', done: true },
-      { label: 'Next.js App Router',  done: true },
-      { label: 'API Integration',     done: true },
-      { label: 'Performance & SEO',   done: true },
-    ],
-  },
-  {
-    id: '6', title: 'Contribute to an Open Source Project',
-    description: 'Submit at least 2 merged PRs to a backend-focused open source repository.',
-    deadline: '2025-05-31', status: 'pending', priority: 'low', category: 'Projects', progress: 0, icon: 'target',
-    subtasks: [
-      { label: 'Find suitable repository',      done: false },
-      { label: 'Fix a beginner-friendly issue', done: false },
-      { label: 'Submit & get PR merged',        done: false },
+      { label: 'Chat Application', done: false },
+      { label: 'E-Commerce Site',  done: false },
     ],
   },
 ]
 
-// ── Config ────────────────────────────────────────────────────────────────────
-const STATUS_CFG: Record<Status, { label: string; dot: string; bg: string; border: string; text: string; Icon: React.ElementType }> = {
-  completed:    { label: 'Completed',   dot: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)',  text: '#6ee7b7', Icon: CheckCircle2 },
-  'in-progress':{ label: 'In Progress', dot: '#a855f7', bg: 'rgba(168,85,247,0.1)', border: 'rgba(168,85,247,0.3)',   text: '#d8b4fe', Icon: Clock        },
-  pending:      { label: 'Pending',     dot: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.2)', text: '#9ca3af', Icon: Circle       },
-}
-
-const PRIORITY_CFG: Record<Priority, { label: string; color: string; bg: string }> = {
-  high:   { label: 'High',   color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  medium: { label: 'Medium', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
-  low:    { label: 'Low',    color: '#6b7280', bg: 'rgba(107,114,128,0.1)'  },
-}
-
-const CAT_COLOR: Record<Category, string> = {
-  DSA: '#818cf8', 'System Design': '#a855f7', 'Web Dev': '#06b6d4', Communication: '#ec4899', Projects: '#10b981',
-}
-
-const ICONS: Record<RoadmapItem['icon'], React.ElementType> = {
-  rocket: Rocket, star: Star, planet: Globe, zap: Zap, target: Target,
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)
-
-function deadlineChip(iso: string, status: Status) {
-  if (status === 'completed') return { label: 'Done', color: '#10b981', bg: 'rgba(16,185,129,0.12)' }
-  const d = daysLeft(iso)
-  if (d < 0)  return { label: `${Math.abs(d)}d overdue`, color: '#f87171', bg: 'rgba(248,113,113,0.12)' }
-  if (d <= 7) return { label: `${d}d left`,              color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  }
-  return        { label: fmtDate(iso),                   color: '#9ca3af', bg: 'rgba(107,114,128,0.08)' }
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-function ProgressBar({ value, status }: { value: number; status: Status }) {
-  const color = status === 'completed' ? '#10b981' : status === 'in-progress' ? '#a855f7' : '#374151'
-  const glow  = status === 'completed' ? 'rgba(16,185,129,0.5)' : 'rgba(168,85,247,0.5)'
-  return (
-    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-      <motion.div className="h-full rounded-full"
-        initial={{ width: 0 }} animate={{ width: `${value}%` }}
-        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.25 }}
-        style={{ background: color, boxShadow: value > 0 ? `0 0 8px ${glow}` : 'none' }} />
-    </div>
-  )
-}
-
-function RoadmapCard({ item, index }: { item: RoadmapItem; index: number }) {
-  const [open, setOpen] = useState(false)
-  const sc   = STATUS_CFG[item.status]
-  const pc   = PRIORITY_CFG[item.priority]
-  const dc   = deadlineChip(item.deadline, item.status)
-  const cat  = CAT_COLOR[item.category]
-  const Icon = ICONS[item.icon]
-  const done = item.subtasks.filter(s => s.done).length
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.38, delay: index * 0.06, ease: 'easeOut' }}
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)',
-        border: `1px solid ${item.status === 'in-progress' ? 'rgba(168,85,247,0.22)' : 'rgba(255,255,255,0.07)'}`,
-        boxShadow: item.status === 'in-progress' ? 'inset 0 0 40px rgba(124,58,237,0.07),0 0 0 1px rgba(139,92,246,0.08)' : 'none',
-        backdropFilter: 'blur(12px)',
-      }}
-    >
-      {/* Category accent line */}
-      <div className="h-px" style={{ background: `linear-gradient(to right,${cat},transparent)` }} />
-
-      <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: `${cat}20`, border: `1px solid ${cat}40`, color: cat, boxShadow: `0 0 14px ${cat}28` }}>
-            <Icon size={17} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap gap-1.5 mb-1">
-              <span className="text-[9px] px-1.5 py-0.5 rounded font-bold text-white" style={{ background: cat }}>{item.category}</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold" style={{ background: pc.bg, color: pc.color, border: `1px solid ${pc.color}30` }}>{pc.label} priority</span>
-            </div>
-            <h3 className={`text-sm font-bold leading-snug ${item.status === 'completed' ? 'text-gray-500 line-through' : 'text-white'}`}>{item.title}</h3>
-            <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 leading-relaxed">{item.description}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-              style={{ background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text }}>
-              <sc.Icon size={10} style={{ color: sc.dot }} />{sc.label}
-            </span>
-            <button onClick={() => setOpen(!open)} aria-label={open ? 'Collapse' : 'Expand'}
-              className="text-gray-600 hover:text-violet-400 transition p-0.5">
-              <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <ChevronDown size={14} />
-              </motion.div>
-            </button>
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="mt-3 flex items-center gap-2.5">
-          <div className="flex-1"><ProgressBar value={item.progress} status={item.status} /></div>
-          <span className="text-[10px] font-bold shrink-0" style={{ color: item.status === 'completed' ? '#10b981' : '#a855f7' }}>{item.progress}%</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold shrink-0 flex items-center gap-1"
-            style={{ background: dc.bg, color: dc.color }}>
-            <Calendar size={8} />{dc.label}
-          </span>
-        </div>
-
-        {/* Subtask dots */}
-        <div className="mt-2.5 flex items-center gap-2">
-          <div className="flex gap-1">
-            {item.subtasks.map((s, i) => (
-              <div key={i} className="w-4 h-1.5 rounded-full transition-all"
-                style={{
-                  background: s.done ? (item.status === 'completed' ? '#10b981' : '#a855f7') : 'rgba(255,255,255,0.07)',
-                  boxShadow: s.done ? `0 0 5px ${item.status === 'completed' ? '#10b981' : '#a855f7'}` : 'none',
-                }} />
-            ))}
-          </div>
-          <span className="text-[9px] text-gray-600">{done}/{item.subtasks.length} subtasks</span>
-        </div>
-
-        {/* Expanded subtasks */}
-        <AnimatePresence>
-          {open && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.22 }} className="overflow-hidden">
-              <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-[9px] text-gray-600 font-semibold uppercase tracking-widest mb-2">Subtasks</p>
-                {item.subtasks.map((s, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-                    style={{
-                      background: s.done ? 'rgba(16,185,129,0.05)' : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${s.done ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)'}`,
-                    }}>
-                    <div className="w-4 h-4 rounded flex items-center justify-center shrink-0"
-                      style={{ background: s.done ? '#10b981' : 'rgba(255,255,255,0.05)', border: `1px solid ${s.done ? '#10b981' : 'rgba(255,255,255,0.1)'}`, boxShadow: s.done ? '0 0 6px rgba(16,185,129,0.5)' : 'none' }}>
-                      {s.done && <CheckCircle2 size={9} className="text-white" />}
-                    </div>
-                    <span className={`text-xs ${s.done ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{s.label}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.article>
-  )
-}
-
-function StatCard({ label, value, Icon, color, delay }: { label: string; value: string | number; Icon: React.ElementType; color: string; delay: number }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38, delay }}
-      className="rounded-2xl p-4 flex items-center gap-3"
-      style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)' }}>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: `${color}18`, border: `1px solid ${color}35`, color, boxShadow: `0 0 12px ${color}28` }}>
-        <Icon size={15} />
-      </div>
-      <div>
-        <p className="text-white font-black text-lg leading-none">{value}</p>
-        <p className="text-gray-600 text-[10px] mt-0.5">{label}</p>
-      </div>
-    </motion.div>
-  )
+// ── Empty form ────────────────────────────────────────────────────────────────
+const EMPTY_FORM = {
+  title:       '',
+  description: '',
+  deadline:    new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+  priority:    'medium' as Priority,
+  category:    'DSA' as Category,
+  icon:        'target' as IconKey,
+  subtaskInput: '',
+  subtasks:    [] as Subtask[],
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-type FilterStatus   = 'all' | Status
-type FilterCategory = 'all' | Category
-type FilterPriority = 'all' | Priority
-
 export default function RoadmapPage() {
-  // TODO backend teammate: replace with useSWR/fetch from GET /api/learner/roadmap
-  const [items]          = useState<RoadmapItem[]>(MOCK_ITEMS)
-  const [fStatus,   setFS] = useState<FilterStatus>('all')
-  const [fCategory, setFC] = useState<FilterCategory>('all')
-  const [fPriority, setFP] = useState<FilterPriority>('all')
-  const [showFilters, setShowFilters] = useState(false)
+  const [items,       setItems]       = useState<RoadmapItem[]>(INITIAL)
+  const [showModal,   setShowModal]   = useState(false)
+  const [editId,      setEditId]      = useState<string | null>(null)
+  const [fStatus,     setFStatus]     = useState<'all' | Status>('all')
+  const [fCategory,   setFCategory]   = useState<'all' | Category>('all')
+  const [expandedId,  setExpandedId]  = useState<string | null>(null)
+  const [form,        setForm]        = useState(EMPTY_FORM)
+  const inputRef = useRef<HTMLInputElement>(null)
 
+  // Focus title input when modal opens
+  useEffect(() => {
+    if (showModal) setTimeout(() => inputRef.current?.focus(), 120)
+  }, [showModal])
+
+  // ── Stats (derived — always up to date) ────────────────────────────────────
   const total      = items.length
   const completed  = items.filter(i => i.status === 'completed').length
   const inProgress = items.filter(i => i.status === 'in-progress').length
-  const overallPct = Math.round(items.reduce((a, i) => a + i.progress, 0) / total)
+  const avgProgress = total
+    ? Math.round(items.reduce((s, i) => s + i.progress, 0) / total)
+    : 0
 
-  const filtered = items.filter(item => {
-    if (fStatus   !== 'all' && item.status   !== fStatus)   return false
-    if (fCategory !== 'all' && item.category !== fCategory) return false
-    if (fPriority !== 'all' && item.priority !== fPriority) return false
-    return true
-  })
+  // ── Filtered list ───────────────────────────────────────────────────────────
+  const filtered = items.filter(i =>
+    (fStatus   === 'all' || i.status   === fStatus) &&
+    (fCategory === 'all' || i.category === fCategory)
+  )
 
-  const CATS: Category[] = ['DSA', 'System Design', 'Web Dev', 'Communication', 'Projects']
-
-  function FilterBtn({ active, color, onClick, children }: { active: boolean; color?: string; onClick: () => void; children: React.ReactNode }) {
-    return (
-      <button onClick={onClick} className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all"
-        style={{
-          background: active ? (color ? `${color}25` : 'rgba(124,58,237,0.3)') : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${active ? (color ? `${color}55` : 'rgba(139,92,246,0.5)') : 'rgba(255,255,255,0.07)'}`,
-          color: active ? (color ?? '#c4b5fd') : '#6b7280',
-        }}
-      >{children}</button>
-    )
+  // ── Open modal for add ──────────────────────────────────────────────────────
+  function openAdd() {
+    setEditId(null)
+    setForm(EMPTY_FORM)
+    setShowModal(true)
   }
 
+  // ── Open modal for edit ─────────────────────────────────────────────────────
+  function openEdit(item: RoadmapItem) {
+    setEditId(item.id)
+    setForm({
+      title:        item.title,
+      description:  item.description,
+      deadline:     item.deadline.split('T')[0],
+      priority:     item.priority,
+      category:     item.category,
+      icon:         item.icon,
+      subtaskInput: '',
+      subtasks:     item.subtasks,
+    })
+    setShowModal(true)
+  }
+
+  // ── Save (add or update) ────────────────────────────────────────────────────
+  function saveGoal() {
+    if (!form.title.trim()) return   // guard — title required
+
+    if (editId) {
+      // Update existing
+      setItems(prev => prev.map(i =>
+        i.id === editId
+          ? { ...i, title: form.title.trim(), description: form.description.trim(),
+              deadline: form.deadline, priority: form.priority,
+              category: form.category, icon: form.icon, subtasks: form.subtasks }
+          : i
+      ))
+    } else {
+      // Add new
+      const goal: RoadmapItem = {
+        id:          Date.now().toString(),
+        title:       form.title.trim(),
+        description: form.description.trim() || 'Custom learning goal',
+        deadline:    form.deadline,
+        status:      'pending',
+        priority:    form.priority,
+        category:    form.category,
+        progress:    0,
+        icon:        form.icon,
+        subtasks:    form.subtasks,
+      }
+      setItems(prev => [goal, ...prev])
+    }
+
+    setShowModal(false)
+    setForm(EMPTY_FORM)
+    setEditId(null)
+  }
+
+  // ── Delete ──────────────────────────────────────────────────────────────────
+  function deleteItem(id: string) {
+    setItems(prev => prev.filter(i => i.id !== id))
+    if (expandedId === id) setExpandedId(null)
+  }
+
+  // ── Cycle status ────────────────────────────────────────────────────────────
+  function cycleStatus(id: string) {
+    const cycle: Status[] = ['pending', 'in-progress', 'completed']
+    setItems(prev => prev.map(i => {
+      if (i.id !== id) return i
+      const next = cycle[(cycle.indexOf(i.status) + 1) % cycle.length]
+      return { ...i, status: next, progress: next === 'completed' ? 100 : i.progress }
+    }))
+  }
+
+  // ── Toggle subtask ──────────────────────────────────────────────────────────
+  function toggleSubtask(itemId: string, idx: number) {
+    setItems(prev => prev.map(i => {
+      if (i.id !== itemId) return i
+      const subtasks = i.subtasks.map((s, j) => j === idx ? { ...s, done: !s.done } : s)
+      const progress = subtasks.length
+        ? Math.round(subtasks.filter(s => s.done).length / subtasks.length * 100)
+        : i.progress
+      return { ...i, subtasks, progress }
+    }))
+  }
+
+  // ── Update progress slider ──────────────────────────────────────────────────
+  function updateProgress(id: string, val: number) {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, progress: val } : i))
+  }
+
+  // ── Add subtask in form ─────────────────────────────────────────────────────
+  function addSubtask() {
+    if (!form.subtaskInput.trim()) return
+    setForm(f => ({
+      ...f,
+      subtasks: [...f.subtasks, { label: f.subtaskInput.trim(), done: false }],
+      subtaskInput: '',
+    }))
+  }
+
+  // ── Close modal ─────────────────────────────────────────────────────────────
+  function closeModal() {
+    setShowModal(false)
+    setForm(EMPTY_FORM)
+    setEditId(null)
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <DashboardShell activeHref="/learner/roadmap">
 
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.38 }}
-        className="flex items-center justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-white font-black text-lg tracking-tight flex items-center gap-2">
-            <span style={{ filter: 'drop-shadow(0 0 8px #a855f7)' }}>🗺️</span>
-            Your Learning Roadmap
-          </h1>
-          <p className="text-gray-500 text-xs mt-0.5">Backend Developer path · {total} milestones</p>
+          <h1 className="text-white font-bold text-lg">🗺️ Learning Roadmap</h1>
+          <p className="text-gray-500 text-xs">Backend Developer Path</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-            style={{
-              background: showFilters ? 'rgba(124,58,237,0.25)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${showFilters ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
-              color: showFilters ? '#c4b5fd' : '#6b7280',
-            }}>
-            <Filter size={12} /> Filters
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)', boxShadow: '0 0 14px rgba(124,58,237,0.4)' }}>
-            <Plus size={12} /> Add Goal
-          </button>
-        </div>
-      </motion.div>
+        <button
+          onClick={openAdd}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl text-white transition-all hover:opacity-90 active:scale-95"
+          style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)', boxShadow: '0 0 12px rgba(124,58,237,0.4)' }}
+        >
+          <Plus size={12} /> Add Goal
+        </button>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3 mb-4">
-        <StatCard label="Total Milestones" value={total}          Icon={Target}       color="#a855f7" delay={0}    />
-        <StatCard label="Completed"        value={completed}      Icon={CheckCircle2} color="#10b981" delay={0.05} />
-        <StatCard label="In Progress"      value={inProgress}     Icon={Flame}        color="#f59e0b" delay={0.1}  />
-        <StatCard label="Overall Progress" value={`${overallPct}%`} Icon={Rocket}     color="#6366f1" delay={0.15} />
+        {[
+          { label: 'Total Goals',  value: total,       color: 'text-white'        },
+          { label: 'Completed',    value: completed,   color: 'text-green-400'    },
+          { label: 'In Progress',  value: inProgress,  color: 'text-violet-400'   },
+          { label: 'Avg Progress', value: `${avgProgress}%`, color: 'text-amber-400' },
+        ].map(s => (
+          <div key={s.label} className="p-3 rounded-xl border border-white/10" style={{ background: 'rgba(0,0,0,0.3)' }}>
+            <p className="text-[10px] text-gray-400 mb-1">{s.label}</p>
+            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Master progress */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-        className="mb-4 rounded-2xl p-4"
-        style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(99,102,241,0.06))', border: '1px solid rgba(139,92,246,0.2)', backdropFilter: 'blur(12px)' }}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Star size={13} className="text-amber-400" style={{ filter: 'drop-shadow(0 0 4px #fbbf24)' }} />
-            <span className="text-white font-bold text-xs">Overall Roadmap Completion</span>
-          </div>
-          <span className="text-violet-300 font-black text-sm">{overallPct}%</span>
-        </div>
-        <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <motion.div className="h-full rounded-full"
-            initial={{ width: 0 }} animate={{ width: `${overallPct}%` }}
-            transition={{ duration: 1.1, ease: 'easeOut', delay: 0.3 }}
-            style={{ background: 'linear-gradient(to right,#6366f1,#a855f7,#ec4899)', boxShadow: '0 0 12px rgba(168,85,247,0.6)' }} />
-        </div>
-        <div className="flex justify-between mt-1.5">
-          <span className="text-[9px] text-gray-600">0%</span>
-          <span className="text-[9px] text-gray-600">Target: Backend Developer · 100%</span>
-        </div>
-      </motion.div>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {(['all','completed','in-progress','pending'] as const).map(s => (
+          <button
+            key={s}
+            onClick={() => setFStatus(s)}
+            className="px-3 py-1 rounded-lg text-xs transition-all"
+            style={{
+              background: fStatus === s ? 'rgba(124,58,237,0.7)' : 'rgba(0,0,0,0.3)',
+              color:      fStatus === s ? '#fff' : '#6b7280',
+              border:     `1px solid ${fStatus === s ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
+            }}
+          >{s}</button>
+        ))}
+        <div className="w-px bg-white/10 mx-1" />
+        {(['all', ...CATEGORIES] as const).map(c => (
+          <button
+            key={c}
+            onClick={() => setFCategory(c as any)}
+            className="px-3 py-1 rounded-lg text-xs transition-all"
+            style={{
+              background: fCategory === c ? 'rgba(99,102,241,0.4)' : 'rgba(0,0,0,0.3)',
+              color:      fCategory === c ? '#c7d2fe' : '#6b7280',
+              border:     `1px solid ${fCategory === c ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)'}`,
+            }}
+          >{c}</button>
+        ))}
+      </div>
 
-      {/* Filter panel */}
+      {/* Empty state */}
+      {filtered.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="text-3xl mb-3">🌌</div>
+          <p className="text-gray-400 text-sm font-medium">No goals match this filter</p>
+          <p className="text-gray-600 text-xs mt-1">Try a different filter or add a new goal</p>
+        </div>
+      )}
+
+      {/* Cards grid */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <AnimatePresence>
+          {filtered.map(item => {
+            const st  = STATUS_STYLE[item.status]
+            const dl  = daysLeft(item.deadline)
+            const exp = expandedId === item.id
+
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-xl border border-white/10 overflow-hidden"
+                style={{ background: 'rgba(0,0,0,0.25)' }}
+              >
+                {/* Card top */}
+                <div className="p-4">
+
+                  {/* Row 1: icon + title + actions */}
+                  <div className="flex items-start gap-2 mb-2">
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: 'rgba(124,58,237,0.2)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.25)' }}
+                    >
+                      {ICON_MAP[item.icon]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-bold text-sm leading-tight truncate">{item.title}</h3>
+                      <p className="text-gray-500 text-[11px] mt-0.5 leading-tight">{item.description}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-600 hover:text-violet-300 hover:bg-white/[0.06] transition"
+                      ><Pencil size={10} /></button>
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition"
+                      ><Trash2 size={10} /></button>
+                    </div>
+                  </div>
+
+                  {/* Row 2: status badge + priority + deadline */}
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <button
+                      onClick={() => cycleStatus(item.id)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all hover:opacity-80 active:scale-95"
+                      style={{ background: st.bg, color: st.color, border: `1px solid ${st.color}30` }}
+                      title="Click to cycle status"
+                    >
+                      {st.icon} {st.label}
+                    </button>
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ color: PRIORITY_COLOR[item.priority], background: `${PRIORITY_COLOR[item.priority]}18` }}
+                    >{item.priority}</span>
+                    <span className="text-[10px]" style={{ color: dl.color }}>{dl.label}</span>
+                    <span className="ml-auto text-[10px] text-gray-600">{item.category}</span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mb-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] text-gray-500">Progress</span>
+                      <span className="text-[10px] text-violet-400 font-semibold">{item.progress}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: item.status === 'completed' ? '#4ade80' : 'linear-gradient(90deg,#7c3aed,#6366f1)' }}
+                        animate={{ width: `${item.progress}%` }}
+                        transition={{ duration: 0.4 }}
+                      />
+                    </div>
+                    {/* Slider to manually adjust progress */}
+                    <input
+                      type="range" min={0} max={100} value={item.progress}
+                      onChange={e => updateProgress(item.id, +e.target.value)}
+                      className="w-full mt-1 accent-violet-500"
+                      style={{ height: '2px' }}
+                    />
+                  </div>
+
+                  {/* Expand toggle */}
+                  {item.subtasks.length > 0 && (
+                    <button
+                      onClick={() => setExpandedId(exp ? null : item.id)}
+                      className="flex items-center gap-1 text-[10px] text-gray-600 hover:text-gray-300 transition mt-1"
+                    >
+                      <motion.span animate={{ rotate: exp ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown size={11} />
+                      </motion.span>
+                      {item.subtasks.filter(s => s.done).length}/{item.subtasks.length} subtasks
+                    </button>
+                  )}
+                </div>
+
+                {/* Subtasks (expanded) */}
+                <AnimatePresence>
+                  {exp && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 space-y-1.5 border-t border-white/[0.06] pt-3">
+                        {item.subtasks.map((st, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => toggleSubtask(item.id, idx)}
+                            className="flex items-center gap-2 w-full text-left group"
+                          >
+                            <div
+                              className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                              style={{
+                                border: st.done ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.15)',
+                                background: st.done ? 'rgba(74,222,128,0.15)' : 'transparent',
+                              }}
+                            >
+                              {st.done && <CheckCircle2 size={9} style={{ color: '#4ade80' }} />}
+                            </div>
+                            <span
+                              className="text-[11px] transition-all"
+                              style={{ color: st.done ? '#4ade80' : '#9ca3af', textDecoration: st.done ? 'line-through' : 'none' }}
+                            >{st.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Add / Edit Modal ──────────────────────────────────────────────────── */}
+      {/* 
+        CRITICAL FIX: The original used `fixed` positioning which gets clipped 
+        by the glass shell's `overflow: hidden`. We use a portal-style div that 
+        is rendered as a sibling inside DashboardShell's scroll container, with 
+        a high z-index overlay that fills the shell's viewport using inset-0 
+        relative to the nearest positioned ancestor.
+      */}
       <AnimatePresence>
-        {showFilters && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden mb-4">
-            <div className="rounded-2xl p-3 flex flex-wrap gap-5"
-              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}>
-              <div>
-                <p className="text-[9px] text-gray-600 font-semibold uppercase tracking-widest mb-1.5">Status</p>
-                <div className="flex gap-1.5">
-                  {(['all','completed','in-progress','pending'] as FilterStatus[]).map(s => (
-                    <FilterBtn key={s} active={fStatus === s} onClick={() => setFS(s)}>{s === 'all' ? 'All' : s}</FilterBtn>
-                  ))}
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.75)' }}
+            onMouseDown={e => { if (e.target === e.currentTarget) closeModal() }}
+          >
+            <motion.div
+              initial={{ scale: 0.93, opacity: 0, y: 12 }}
+              animate={{ scale: 1,    opacity: 1, y: 0  }}
+              exit={{   scale: 0.93, opacity: 0, y: 12  }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="w-[420px] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 flex flex-col"
+              style={{ background: '#0b0818', boxShadow: '0 0 0 1px rgba(139,92,246,0.15), 0 32px 80px rgba(0,0,0,0.8)' }}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
+                <h3 className="text-white font-bold text-sm">
+                  {editId ? 'Edit Goal' : 'Add New Goal'}
+                </h3>
+                <button onClick={closeModal} className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-600 hover:text-white hover:bg-white/[0.06] transition">
+                  <X size={12} />
+                </button>
+              </div>
+
+              {/* Modal body */}
+              <div className="px-5 py-4 space-y-4">
+
+                {/* Title */}
+                <div>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Goal Title *</label>
+                  <input
+                    ref={inputRef}
+                    value={form.title}
+                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                    onKeyDown={e => e.key === 'Enter' && saveGoal()}
+                    placeholder="e.g. Solve 100 DSA Problems"
+                    className="w-full px-3 py-2 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Description</label>
+                  <input
+                    value={form.description}
+                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Brief description of this goal"
+                    className="w-full px-3 py-2 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-all"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                </div>
+
+                {/* Deadline + Priority */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Deadline</label>
+                    <input
+                      type="date"
+                      value={form.deadline}
+                      onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl text-sm text-white outline-none"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Priority</label>
+                    <select
+                      value={form.priority}
+                      onChange={e => setForm(f => ({ ...f, priority: e.target.value as Priority }))}
+                      className="w-full px-3 py-2 rounded-xl text-sm text-white outline-none"
+                      style={{ background: '#0b0818', border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Category</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORIES.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setForm(f => ({ ...f, category: c }))}
+                        className="px-2.5 py-1 rounded-lg text-xs transition-all"
+                        style={{
+                          background: form.category === c ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.04)',
+                          color:      form.category === c ? '#c4b5fd' : '#6b7280',
+                          border:     `1px solid ${form.category === c ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        }}
+                      >{c}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Icon picker */}
+                <div>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Icon</label>
+                  <div className="flex gap-2">
+                    {ICONS.map(ic => (
+                      <button
+                        key={ic}
+                        onClick={() => setForm(f => ({ ...f, icon: ic }))}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                        style={{
+                          background: form.icon === ic ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.04)',
+                          border:     `1px solid ${form.icon === ic ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                          color:      form.icon === ic ? '#a78bfa' : '#6b7280',
+                        }}
+                      >{ICON_MAP[ic]}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subtasks */}
+                <div>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block">Subtasks</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      value={form.subtaskInput}
+                      onChange={e => setForm(f => ({ ...f, subtaskInput: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSubtask() } }}
+                      placeholder="Add a subtask and press Enter"
+                      className="flex-1 px-3 py-2 rounded-xl text-xs text-white placeholder-gray-600 outline-none"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    />
+                    <button
+                      onClick={addSubtask}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-violet-400 hover:text-white transition"
+                      style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(139,92,246,0.25)' }}
+                    ><Plus size={12} /></button>
+                  </div>
+                  {form.subtasks.length > 0 && (
+                    <div className="space-y-1">
+                      {form.subtasks.map((s, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-gray-400">
+                          <Circle size={9} className="text-gray-600 shrink-0" />
+                          <span className="flex-1">{s.label}</span>
+                          <button
+                            onClick={() => setForm(f => ({ ...f, subtasks: f.subtasks.filter((_, i) => i !== idx) }))}
+                            className="text-gray-700 hover:text-red-400 transition"
+                          ><X size={9} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div>
-                <p className="text-[9px] text-gray-600 font-semibold uppercase tracking-widest mb-1.5">Category</p>
-                <div className="flex gap-1.5 flex-wrap">
-                  <FilterBtn active={fCategory === 'all'} onClick={() => setFC('all')}>All</FilterBtn>
-                  {CATS.map(c => (
-                    <FilterBtn key={c} active={fCategory === c} color={CAT_COLOR[c]} onClick={() => setFC(c)}>{c}</FilterBtn>
-                  ))}
-                </div>
+
+              {/* Modal footer */}
+              <div className="flex justify-end gap-2 px-5 py-4 border-t border-white/[0.07]">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 text-xs text-gray-500 hover:text-gray-300 rounded-xl hover:bg-white/[0.04] transition"
+                >Cancel</button>
+                <button
+                  onClick={saveGoal}
+                  disabled={!form.title.trim()}
+                  className="px-5 py-2 text-xs font-bold rounded-xl text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#6366f1)', boxShadow: form.title.trim() ? '0 0 12px rgba(124,58,237,0.4)' : 'none' }}
+                >
+                  {editId ? 'Save Changes' : 'Add Goal'}
+                </button>
               </div>
-              <div>
-                <p className="text-[9px] text-gray-600 font-semibold uppercase tracking-widest mb-1.5">Priority</p>
-                <div className="flex gap-1.5">
-                  {(['all','high','medium','low'] as FilterPriority[]).map(p => (
-                    <FilterBtn key={p} active={fPriority === p} color={p !== 'all' ? PRIORITY_CFG[p].color : undefined} onClick={() => setFP(p)}>
-                      {p === 'all' ? 'All' : p}
-                    </FilterBtn>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Cards */}
-      {filtered.length === 0
-        ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-4xl mb-3" style={{ filter: 'drop-shadow(0 0 10px #a855f7)' }}>🪐</span>
-            <p className="text-white font-bold text-sm">No milestones found</p>
-            <p className="text-gray-600 text-xs mt-1">Try adjusting your filters</p>
-          </motion.div>
-        )
-        : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 pb-4">
-            {filtered.map((item, i) => (
-              <RoadmapCard key={item.id} item={item} index={i} />
-            ))}
-          </div>
-        )
-      }
 
     </DashboardShell>
   )

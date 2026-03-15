@@ -6,7 +6,12 @@ import { Settings2, ChevronDown, Play } from 'lucide-react'
 const DURATIONS = ['15 min', '30 min', '45 min', '60 min']
 type Difficulty = 'Easy' | 'Medium' | 'Hard'
 
-export default function StartConfiguration() {
+interface StartConfigurationProps {
+  onStart?: () => void
+  started?: boolean
+}
+
+export default function StartConfiguration({ onStart, started = false }: StartConfigurationProps) {
   const [duration,   setDuration]   = useState('30 min')
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium')
 
@@ -46,9 +51,9 @@ export default function StartConfiguration() {
       </div>
 
       {/* Start */}
-      <button className="start-btn">
+      <button className="start-btn" onClick={onStart} disabled={started}>
         <Play size={11} style={{ display: 'inline', marginRight: 6 }} />
-        Start Assessment
+        {started ? 'Assessment Started' : 'Start Assessment'}
       </button>
     </div>
   )

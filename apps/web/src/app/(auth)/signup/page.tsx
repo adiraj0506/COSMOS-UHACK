@@ -99,6 +99,23 @@ export default function SignupPage() {
 
       // Show the confirmed COSMOS ID (server may have regenerated it)
       setCreatedId(data.cosmosId ?? cosmosId);
+      if (data.cosmosId) {
+        sessionStorage.setItem("cosmos_id", data.cosmosId);
+      }
+      sessionStorage.setItem("cosmos_email", form.email);
+      sessionStorage.setItem("cosmos_role", data.role ?? form.role);
+      if (data.fullName) {
+        sessionStorage.setItem("cosmos_name", data.fullName);
+      }
+      if (data.companyName || form.companyName) {
+        sessionStorage.setItem("cosmos_org", data.companyName ?? form.companyName);
+      }
+      if (data.collegeName || form.collegeName) {
+        sessionStorage.setItem("cosmos_org", data.collegeName ?? form.collegeName);
+      }
+      if (data.city || form.city) {
+        sessionStorage.setItem("cosmos_city", data.city ?? form.city);
+      }
       setTimeout(() => router.push(ROLE_ROUTES[form.role] ?? "/login"), 3000);
 
     } catch {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import {
@@ -37,7 +37,18 @@ export default function ProfilePanel({ onClose }: ProfilePanelProps) {
   const [publicProfile, setPublicProfile] = useState(false)
   const [editName, setEditName]   = useState(false)
   const [name, setName]           = useState('Akash')
+  const [cosmosId, setCosmosId]   = useState('CSM-LRN-4821')
+  const [roleLabel, setRoleLabel] = useState('Learner')
   const [bio, setBio]             = useState('Backend Developer in the making 🚀')
+
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('cosmos_name')
+    const storedId = sessionStorage.getItem('cosmos_id')
+    const storedRole = sessionStorage.getItem('cosmos_role')
+    if (storedName) setName(storedName)
+    if (storedId) setCosmosId(storedId)
+    if (storedRole) setRoleLabel(storedRole.charAt(0).toUpperCase() + storedRole.slice(1))
+  }, [])
 
   function handleLogout() {
     onClose()
@@ -101,7 +112,7 @@ export default function ProfilePanel({ onClose }: ProfilePanelProps) {
                       boxShadow: '0 0 20px rgba(124,58,237,0.5)',
                     }}
                   >
-                    A
+                    {name.trim().charAt(0) || 'A'}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#080316]"
                     style={{ boxShadow: '0 0 6px rgba(16,185,129,0.8)' }} />
@@ -132,8 +143,8 @@ export default function ProfilePanel({ onClose }: ProfilePanelProps) {
                       <p className="text-gray-500 text-[10px] mt-0.5">{bio}</p>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[9px] px-1.5 py-0.5 rounded font-bold text-white"
-                          style={{ background: '#7c3aed' }}>Learner</span>
-                        <span className="text-[9px] text-gray-600">CSM-LRN-4821</span>
+                          style={{ background: '#7c3aed' }}>{roleLabel}</span>
+                        <span className="text-[9px] text-gray-600">{cosmosId}</span>
                       </div>
                     </>
                   )}
@@ -269,7 +280,7 @@ export default function ProfilePanel({ onClose }: ProfilePanelProps) {
               ))}
 
               <div className="p-3 mt-1">
-                <p className="text-center text-[9px] text-gray-700">COSMOS v1.0.0 · CSM-LRN-4821</p>
+                <p className="text-center text-[9px] text-gray-700">COSMOS v1.0.0 · {cosmosId}</p>
               </div>
             </motion.div>
           )}

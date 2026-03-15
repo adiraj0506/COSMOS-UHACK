@@ -1,10 +1,14 @@
 
-from openai import OpenAI
 import os
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from openai import OpenAI
 
 def evaluate_answer(question, answer):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return "OPENAI_API_KEY not configured. Set it to enable AI evaluation."
+
+    client = OpenAI(api_key=api_key)
     prompt = f"""
     Evaluate technical answer.
 

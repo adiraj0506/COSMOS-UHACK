@@ -5,6 +5,7 @@ import './dashboard.css'
 import DashboardShell from '@/components/learner/dashboard/DashboardShell'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   Target, FileText, Map, MessageSquare,
   Check, Flame, TrendingUp, ChevronRight, ArrowUpRight,
@@ -120,6 +121,18 @@ const fadeUp = (i: number) => ({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LearnerDashboard() {
+  const [targetRole, setTargetRole] = useState('Backend Developer')
+
+  useEffect(() => {
+    const raw = localStorage.getItem('cosmos_user_goal')
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw)
+        if (parsed?.goal) setTargetRole(parsed.goal)
+      } catch {}
+    }
+  }, [])
+
   return (
     <DashboardShell activeHref="/learner/dashboard">
 
@@ -153,7 +166,7 @@ export default function LearnerDashboard() {
               <ArcGauge value={68} />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] text-gray-500 mb-0.5">Target Role</p>
-                <p className="text-white font-bold text-sm mb-3">Backend Developer</p>
+                <p className="text-white font-bold text-sm mb-3">{targetRole}</p>
                 <div className="space-y-2.5">
                   {SKILLS.map(({ label, val, fillClass }) => (
                     <div key={label}>
@@ -181,7 +194,7 @@ export default function LearnerDashboard() {
                 <span className="text-[9px] text-gray-500">Current level</span>
               </div>
             </div>
-            <div style={{ height: 186 }}>
+            <div style={{ height: 186, minWidth: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={RADAR_DATA} cx="50%" cy="50%" outerRadius="68%">
                   <PolarGrid stroke="rgba(139,92,246,0.12)" />
@@ -204,7 +217,7 @@ export default function LearnerDashboard() {
                 <TrendingUp size={10} /> +10 pts
               </div>
             </div>
-            <div style={{ height: 166 }}>
+            <div style={{ height: 166, minWidth: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={PROGRESS_DATA} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
                   <defs>

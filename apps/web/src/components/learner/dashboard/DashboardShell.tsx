@@ -1,5 +1,6 @@
 'use client'
 
+import ChatbotWidget from './ChatbotWidget'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -44,6 +45,7 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
   const router = useRouter()
   const [collapsed,  setCollapsed]  = useState(false)
   const [openPanel,  setOpenPanel]  = useState<Panel>(null)
+  const [displayName, setDisplayName] = useState('Akash')
   const panelRef = useRef<HTMLDivElement>(null)
 
   // ── Onboarding state ──────────────────────────────────────────────────────
@@ -53,20 +55,98 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
   const [showGoalEditor, setShowGoalEditor] = useState(false)
   const [savedGoal,      setSavedGoal]      = useState<OnboardingData | null>(null)
 
-  // On mount: check if first-time user (localStorage has no completion flag)
-  // TODO backend teammate: replace localStorage check with
-  //   GET /api/learner/profile → { onboardingComplete: boolean }
+  // On mount: check if first-time user (prefer backend profile, fallback to localStorage)
   useEffect(() => {
-    const done = localStorage.getItem(KEY_DONE)
-    if (!done) {
-      // First time — show popup after short delay for page-load feel
-      const t = setTimeout(() => setShowOnboarding(true), 600)
-      return () => clearTimeout(t)
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    async function loadProfile() {
+      const cosmosId = sessionStorage.getItem('cosmos_id')
+      const cachedName = sessionStorage.getItem('cosmos_name')
+      if (cachedName && !cancelled) setDisplayName(cachedName)
+      if (cosmosId) {
+        try {
+          const res = await fetch(`/api/learner/profile?cosmosId=${encodeURIComponent(cosmosId)}`)
+          const data = await res.json()
+
+          if (!cancelled && data && !data.error) {
+            if (data.fullName) {
+              setDisplayName(data.fullName)
+              sessionStorage.setItem('cosmos_name', data.fullName)
+            }
+            if (data.goal) {
+              setSavedGoal({
+                goal: data.goal.goal,
+                category: data.goal.category,
+                deadline: data.goal.deadline,
+                months: data.goal.months,
+                weeks: data.goal.weeks,
+                days: data.goal.days,
+              })
+            }
+
+            if (data.onboardingComplete === false) {
+              timer = setTimeout(() => setShowOnboarding(true), 600)
+              return
+            }
+            return
+          }
+          if (!cancelled) {
+            timer = setTimeout(() => setShowOnboarding(true), 600)
+          }
+          return
+        } catch {}
+        if (!cancelled) {
+          timer = setTimeout(() => setShowOnboarding(true), 600)
+        }
+        return
+      }
+
+      const cosmosEmail = sessionStorage.getItem('cosmos_email')
+      if (cosmosEmail) {
+        try {
+          const res = await fetch(`/api/learner/profile?email=${encodeURIComponent(cosmosEmail)}`)
+          const data = await res.json()
+          if (!cancelled && data && !data.error) {
+            if (data.fullName) {
+              setDisplayName(data.fullName)
+              sessionStorage.setItem('cosmos_name', data.fullName)
+            }
+            if (data.goal) {
+              setSavedGoal({
+                goal: data.goal.goal,
+                category: data.goal.category,
+                deadline: data.goal.deadline,
+                months: data.goal.months,
+                weeks: data.goal.weeks,
+                days: data.goal.days,
+              })
+            }
+            if (data.onboardingComplete === false) {
+              timer = setTimeout(() => setShowOnboarding(true), 600)
+              return
+            }
+            return
+          }
+        } catch {}
+      }
+
+      const done = localStorage.getItem(KEY_DONE)
+      if (!done) {
+        timer = setTimeout(() => setShowOnboarding(true), 600)
+        return
+      }
+
+      const raw = localStorage.getItem(KEY_GOAL)
+      if (raw) {
+        try { setSavedGoal(JSON.parse(raw)) } catch {}
+      }
     }
-    // Load saved goal for display in header tooltip
-    const raw = localStorage.getItem(KEY_GOAL)
-    if (raw) {
-      try { setSavedGoal(JSON.parse(raw)) } catch {}
+
+    loadProfile()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
     }
   }, [])
 
@@ -90,13 +170,27 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
     // localStorage already saved inside CosmicOnboarding component
     setSavedGoal(data)
     setShowOnboarding(false)
-    // TODO backend teammate: POST /api/learner/onboarding { ...data }
+    const cosmosId = sessionStorage.getItem('cosmos_id')
+    if (cosmosId) {
+      fetch('/api/learner/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cosmosId, ...data }),
+      }).catch(() => {})
+    }
   }
 
   function handleGoalUpdateConfirm(data: OnboardingData) {
     setSavedGoal(data)
     setShowGoalEditor(false)
-    // TODO backend teammate: PATCH /api/learner/goal { ...data }
+    const cosmosId = sessionStorage.getItem('cosmos_id')
+    if (cosmosId) {
+      fetch('/api/learner/goal', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cosmosId, ...data }),
+      }).catch(() => {})
+    }
   }
 
   return (
@@ -121,8 +215,6 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
             mode="onboarding"
             onConfirm={handleFirstTimeConfirm}
             onClose={() => {
-              // Allow closing — mark as seen so it doesn't show again
-              localStorage.setItem(KEY_DONE, 'true')
               setShowOnboarding(false)
             }}
           />
@@ -217,6 +309,9 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
               {!collapsed && 'Logout'}
             </button>
           </div>
+          
+          {/* ── Floating Saarthi chatbot ── */}
+          <ChatbotWidget collapsed={collapsed} />
 
           {/* Collapse toggle */}
           <button
@@ -235,12 +330,12 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
             className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] shrink-0"
             style={{ background: 'rgba(10,4,30,0.3)' }}
           >
-            <div>
-              <p className="text-gray-500 text-xs">
-                Welcome Back, <span className="text-violet-300 font-semibold">Akash</span>
-              </p>
-              <p className="text-white font-bold text-base tracking-tight">Learner Dashboard</p>
-            </div>
+        <div>
+          <p className="text-gray-500 text-xs">
+            Welcome Back, <span className="text-violet-300 font-semibold">{displayName}</span>
+          </p>
+          <p className="text-white font-bold text-base tracking-tight">Learner Dashboard</p>
+        </div>
 
             <div className="flex items-center gap-2" ref={panelRef}>
 
@@ -326,7 +421,7 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
                   }`}
                   style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
                 >
-                  A
+                  {displayName.trim().charAt(0) || 'A'}
                 </button>
                 <div
                   className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0a0418]"

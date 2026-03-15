@@ -9,8 +9,11 @@ interface QuestionCardProps {
   totalQuestions: number
   questionText: string
   codeSnippet?: string
+  answer: string
+  onAnswerChange: (value: string) => void
   onPrev: () => void
   onNext: () => void
+  onSubmit: () => void
 }
 
 export default function QuestionCard({
@@ -18,11 +21,13 @@ export default function QuestionCard({
   totalQuestions,
   questionText,
   codeSnippet,
+  answer,
+  onAnswerChange,
   onPrev,
   onNext,
+  onSubmit,
 }: QuestionCardProps) {
   const [timeLeft, setTimeLeft] = useState(1800) // 30 min in seconds
-  const [answer,   setAnswer]   = useState('')
   const [marked,   setMarked]   = useState(false)
 
   // Countdown
@@ -101,7 +106,7 @@ export default function QuestionCard({
         className="answer-area"
         placeholder="Write your solution or explanation here…"
         value={answer}
-        onChange={e => setAnswer(e.target.value)}
+        onChange={e => onAnswerChange(e.target.value)}
         rows={4}
       />
 
@@ -115,7 +120,7 @@ export default function QuestionCard({
         </span>
         <button
           className={`q-nav-btn ${questionNumber < totalQuestions ? 'q-nav-btn--primary' : ''}`}
-          onClick={onNext}
+          onClick={questionNumber < totalQuestions ? onNext : onSubmit}
         >
           {questionNumber < totalQuestions ? <>Next <ChevronRight size={13} /></> : 'Submit'}
         </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -30,6 +30,16 @@ interface CollegeShellProps {
 export default function CollegeShell({ children, activeHref = '' }: CollegeShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [displayCollege, setDisplayCollege] = useState(MOCK_COLLEGE.name)
+  const [displayCity, setDisplayCity] = useState(MOCK_COLLEGE.city)
+  const [displayCode, setDisplayCode] = useState(MOCK_COLLEGE.code)
+
+  useEffect(() => {
+    const storedOrg = sessionStorage.getItem('cosmos_org')
+    const storedCity = sessionStorage.getItem('cosmos_city')
+    if (storedOrg) setDisplayCollege(storedOrg)
+    if (storedCity) setDisplayCity(storedCity)
+  }, [])
 
   return (
     <div
@@ -89,10 +99,10 @@ export default function CollegeShell({ children, activeHref = '' }: CollegeShell
               <div className="flex items-center gap-1.5">
                 <Building2 size={11} style={{ color: ACCENT, flexShrink: 0 }} />
                 <p className="text-[10px] font-bold text-white truncate leading-tight">
-                  {MOCK_COLLEGE.name.split(' ').slice(0, 3).join(' ')}
+                  {displayCollege.split(' ').slice(0, 3).join(' ')}
                 </p>
               </div>
-              <p className="text-[8.5px] text-gray-600 mt-0.5 ml-4">{MOCK_COLLEGE.city} · {MOCK_COLLEGE.code}</p>
+              <p className="text-[8.5px] text-gray-600 mt-0.5 ml-4">{displayCity} · {displayCode}</p>
             </div>
           )}
 
@@ -152,7 +162,7 @@ export default function CollegeShell({ children, activeHref = '' }: CollegeShell
               <p className="text-gray-500 text-xs">
                 College Portal ·{' '}
                 <span className="font-semibold" style={{ color: '#67e8f9' }}>
-                  {MOCK_COLLEGE.name}
+                  {displayCollege}
                 </span>
               </p>
               <p className="text-white font-bold text-base tracking-tight">College Dashboard</p>

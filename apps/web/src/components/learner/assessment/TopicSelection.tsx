@@ -1,17 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Layers } from 'lucide-react'
 
 const TOPICS = ['DSA', 'System Design', 'Web Dev', 'OS', 'DBMS', 'Networking', 'OOP', 'SQL']
 
-export default function TopicSelection() {
-  const [selected, setSelected] = useState<string[]>(['DSA', 'System Design'])
+interface TopicSelectionProps {
+  value?: string[]
+  onChange?: (value: string[]) => void
+}
+
+export default function TopicSelection({ value = ['DSA', 'System Design'], onChange }: TopicSelectionProps) {
+  const [selected, setSelected] = useState<string[]>(value)
+
+  useEffect(() => {
+    setSelected(value)
+  }, [value])
 
   function toggle(t: string) {
-    setSelected(prev =>
-      prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
-    )
+    const next = selected.includes(t) ? selected.filter(x => x !== t) : [...selected, t]
+    setSelected(next)
+    if (onChange) onChange(next)
   }
 
   return (

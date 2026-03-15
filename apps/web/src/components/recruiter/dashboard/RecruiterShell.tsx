@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -26,6 +26,17 @@ interface RecruiterShellProps {
 export default function RecruiterShell({ children, activeHref = '' }: RecruiterShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [displayName, setDisplayName] = useState(MOCK_RECRUITER.name)
+  const [displayCompany, setDisplayCompany] = useState(MOCK_RECRUITER.company)
+  const [displayLogo, setDisplayLogo] = useState(MOCK_RECRUITER.logo)
+
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('cosmos_name')
+    const storedOrg = sessionStorage.getItem('cosmos_org')
+    if (storedName) setDisplayName(storedName)
+    if (storedOrg) setDisplayCompany(storedOrg)
+    if (storedOrg) setDisplayLogo(storedOrg.trim().charAt(0) || MOCK_RECRUITER.logo)
+  }, [])
 
   return (
     <div
@@ -73,11 +84,11 @@ export default function RecruiterShell({ children, activeHref = '' }: RecruiterS
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black shrink-0"
                   style={{ background:'linear-gradient(135deg,#b45309,#f59e0b)', color:'#fff' }}>
-                  {MOCK_RECRUITER.logo}
+                  {displayLogo}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-white truncate">{MOCK_RECRUITER.company}</p>
-                  <p className="text-[8.5px] text-gray-600 truncate">{MOCK_RECRUITER.name}</p>
+                  <p className="text-[10px] font-bold text-white truncate">{displayCompany}</p>
+                  <p className="text-[8.5px] text-gray-600 truncate">{displayName}</p>
                 </div>
               </div>
             </div>
@@ -137,7 +148,7 @@ export default function RecruiterShell({ children, activeHref = '' }: RecruiterS
             style={{ background:'rgba(10,4,30,0.3)' }}>
             <div>
               <p className="text-gray-500 text-xs">
-                Recruiter Portal · <span className="font-semibold" style={{ color:'#fde68a' }}>{MOCK_RECRUITER.company}</span>
+                Recruiter Portal · <span className="font-semibold" style={{ color:'#fde68a' }}>{displayCompany}</span>
               </p>
               <p className="text-white font-bold text-base tracking-tight">Recruiter Dashboard</p>
             </div>
@@ -150,7 +161,7 @@ export default function RecruiterShell({ children, activeHref = '' }: RecruiterS
               </button>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black cursor-pointer"
                 style={{ background:'linear-gradient(135deg,#b45309,#f59e0b)', boxShadow:'0 0 12px rgba(245,158,11,0.4)', color:'#fff' }}>
-                {MOCK_RECRUITER.name[0]}
+                {displayName.trim().charAt(0) || 'R'}
               </div>
             </div>
           </header>

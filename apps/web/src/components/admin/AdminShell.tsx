@@ -13,7 +13,7 @@
 // Check user profile.role === 'admin' in middleware.ts
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -42,6 +42,15 @@ interface AdminShellProps {
 export default function AdminShell({ children, activeTab = 'overview', onTabChange }: AdminShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [displayName, setDisplayName] = useState('Super Admin')
+  const [displayEmail, setDisplayEmail] = useState('admin@cosmos.ai')
+
+  useEffect(() => {
+    const storedName = sessionStorage.getItem('cosmos_name')
+    const storedEmail = sessionStorage.getItem('cosmos_email')
+    if (storedName) setDisplayName(storedName)
+    if (storedEmail) setDisplayEmail(storedEmail)
+  }, [])
 
   const handleNav = (href: string, label: string) => {
     const tab = label.toLowerCase()
@@ -116,9 +125,9 @@ export default function AdminShell({ children, activeTab = 'overview', onTabChan
             >
               <div className="flex items-center gap-1.5">
                 <Shield size={10} style={{ color: '#a78bfa', flexShrink: 0 }} />
-                <p className="text-[10px] font-bold text-white truncate">Super Admin</p>
+                <p className="text-[10px] font-bold text-white truncate">{displayName}</p>
               </div>
-              <p className="text-[8.5px] text-gray-600 mt-0.5 ml-4">admin@cosmos.ai</p>
+              <p className="text-[8.5px] text-gray-600 mt-0.5 ml-4">{displayEmail}</p>
             </div>
           )}
 
@@ -203,7 +212,7 @@ export default function AdminShell({ children, activeTab = 'overview', onTabChan
                 className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer font-bold text-xs"
                 style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 12px rgba(139,92,246,0.35)' }}
               >
-                A
+                {displayName.trim().charAt(0) || 'A'}
               </div>
             </div>
           </header>

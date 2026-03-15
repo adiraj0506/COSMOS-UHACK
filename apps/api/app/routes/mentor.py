@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/mentor", tags=["Mentor"])
+router = APIRouter(prefix="/api/mentor", tags=["Mentor"])
+
 
 @router.post("/ask")
 def ask_mentor():

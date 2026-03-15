@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Target, ChevronDown } from 'lucide-react'
 
 const GOALS = [
@@ -12,8 +12,22 @@ const GOALS = [
   'ML Engineer',
 ]
 
-export default function GoalSelection() {
-  const [selected, setSelected] = useState('Backend Developer')
+interface GoalSelectionProps {
+  value?: string
+  onChange?: (value: string) => void
+}
+
+export default function GoalSelection({ value = 'Backend Developer', onChange }: GoalSelectionProps) {
+  const [selected, setSelected] = useState(value)
+
+  useEffect(() => {
+    setSelected(value)
+  }, [value])
+
+  function handleChange(next: string) {
+    setSelected(next)
+    if (onChange) onChange(next)
+  }
 
   return (
     <div className="asmnt-card asmnt-card--glow-violet flex flex-col gap-3">
@@ -25,7 +39,7 @@ export default function GoalSelection() {
         <select
           className="asmnt-select pr-8"
           value={selected}
-          onChange={e => setSelected(e.target.value)}
+          onChange={e => handleChange(e.target.value)}
         >
           {GOALS.map(g => (
             <option key={g} value={g}>{g}</option>
