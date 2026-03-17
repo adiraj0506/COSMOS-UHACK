@@ -803,7 +803,7 @@ export default function ProfilePanel({ onClose }: ProfilePanelProps) {
 
   // toast
   const [toast,    setToast]    = useState('')
-  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     const sn = sessionStorage.getItem('cosmos_name')
