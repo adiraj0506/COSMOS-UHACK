@@ -41,6 +41,8 @@ interface DashboardShellProps {
   activeHref?: string
 }
 
+let cachedGoal: OnboardingData | null = null
+
 export default function DashboardShell({ children, activeHref = '' }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed,  setCollapsed]  = useState(false)
@@ -53,7 +55,7 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
   // showGoalEditor: true  → re-open from dashboard toggle button
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showGoalEditor, setShowGoalEditor] = useState(false)
-  const [savedGoal,      setSavedGoal]      = useState<OnboardingData | null>(null)
+  const [savedGoal,      setSavedGoal]      = useState<OnboardingData | null>(cachedGoal)
 
   // On mount: check if first-time user (prefer backend profile, fallback to localStorage)
   useEffect(() => {
@@ -75,14 +77,16 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
               sessionStorage.setItem('cosmos_name', data.fullName)
             }
             if (data.goal) {
-              setSavedGoal({
+              const nextGoal = {
                 goal: data.goal.goal,
                 category: data.goal.category,
                 deadline: data.goal.deadline,
                 months: data.goal.months,
                 weeks: data.goal.weeks,
                 days: data.goal.days,
-              })
+              }
+              cachedGoal = nextGoal
+              setSavedGoal(nextGoal)
             }
 
             if (data.onboardingComplete === false) {
@@ -113,14 +117,16 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
               sessionStorage.setItem('cosmos_name', data.fullName)
             }
             if (data.goal) {
-              setSavedGoal({
+              const nextGoal = {
                 goal: data.goal.goal,
                 category: data.goal.category,
                 deadline: data.goal.deadline,
                 months: data.goal.months,
                 weeks: data.goal.weeks,
                 days: data.goal.days,
-              })
+              }
+              cachedGoal = nextGoal
+              setSavedGoal(nextGoal)
             }
             if (data.onboardingComplete === false) {
               timer = setTimeout(() => setShowOnboarding(true), 600)
@@ -139,7 +145,11 @@ export default function DashboardShell({ children, activeHref = '' }: DashboardS
 
       const raw = localStorage.getItem(KEY_GOAL)
       if (raw) {
-        try { setSavedGoal(JSON.parse(raw)) } catch {}
+        try {
+          const nextGoal = JSON.parse(raw) as OnboardingData
+          cachedGoal = nextGoal
+          setSavedGoal(nextGoal)
+        } catch {}
       }
     }
 
