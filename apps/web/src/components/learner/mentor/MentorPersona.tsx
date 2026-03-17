@@ -33,7 +33,7 @@ export default function MentorPersona({ onPrompt }: MentorPersonaProps) {
           />
         </div>
         <div>
-          <p className="text-white font-bold text-xs">COSMOS Mentor</p>
+          <p className="text-white font-bold text-xs">Saarthi</p>
           <p className="text-violet-400 text-[10px]">AI Career Intelligence</p>
           <p className="text-gray-600 text-[9px] mt-0.5">Specialised: Backend Development</p>
         </div>

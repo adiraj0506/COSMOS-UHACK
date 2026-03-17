@@ -27,10 +27,12 @@ export default function MentorPage() {
       <h2 className="section-title">✦ Digital Mentor Session</h2>
 
       <div className="mentor-main-grid">
-        <ChatWindow
-          pendingPrompt={pendingPrompt}
-          onPromptConsumed={() => setPendingPrompt('')}
-        />
+        <div className="mentor-chat-span">
+          <ChatWindow
+            pendingPrompt={pendingPrompt}
+            onPromptConsumed={() => setPendingPrompt('')}
+          />
+        </div>
       </div>
 
     </DashboardShell>

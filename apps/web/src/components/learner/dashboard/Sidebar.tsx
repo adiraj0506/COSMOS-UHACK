@@ -17,7 +17,7 @@ import {
 const NAV = [
   { label: "Dashboard", href: "/learner/dashboard", icon: LayoutDashboard },
   { label: "Assessment", href: "/learner/assessment", icon: BrainCircuit },
-  { label: "Digital Mentor", href: "/learner/mentor", icon: MessageSquare },
+  { label: "Saarthi", href: "/learner/mentor", icon: MessageSquare },
   { label: "Roadmap", href: "/learner/roadmap", icon: Map },
   { label: "Resume Builder", href: "/learner/resume", icon: FileText },
   { label: "Opportunities", href: "/learner/opportunities", icon: Briefcase },
