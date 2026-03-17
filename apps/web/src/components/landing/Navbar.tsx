@@ -35,18 +35,7 @@ export default function Navbar() {
             Features
           </Link>
 
-          <Link href="/learners" className="hover:text-white transition">
-            Learners
-          </Link>
-
-          <Link href="/recruiters" className="hover:text-white transition">
-            Recruiters
-          </Link>
-
-          <Link href="/colleges" className="hover:text-white transition">
-            Colleges
-          </Link>
-
+          
         </div>
 
 

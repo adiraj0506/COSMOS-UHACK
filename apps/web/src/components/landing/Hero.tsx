@@ -1,5 +1,5 @@
 import Image from "next/image";
-
+import Link from "next/link";
 export default function Hero() {
   return (
     <section
@@ -38,13 +38,16 @@ export default function Hero() {
 
         <div className="flex gap-5">
 
+          <Link href="/signup">
           <button className="px-7 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90">
             Start Your Journey
           </button>
-
+          </Link>
+          <Link href="/features">
           <button className="px-7 py-3 border border-white/20 rounded-xl hover:bg-white/10">
             Explore Features
           </button>
+          </Link>
 
         </div>
 
