@@ -82,7 +82,7 @@ export default function ChatWindow({
   useEffect(() => {
     async function loadGreeting() {
       try {
-        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/app/routes/mentor.py", {
+        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/mentor/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export default function ChatWindow({
     setLoading(true)
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/app/routes/mentor.py", {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/mentor/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

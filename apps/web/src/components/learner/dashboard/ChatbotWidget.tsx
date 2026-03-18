@@ -38,7 +38,7 @@ const GREET: Message = {
 
 async function fetchReply(msg: string): Promise<string> {
   try {
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/app/routes/mentor.py", {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/mentor/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
